@@ -1,0 +1,4 @@
+http:
+  allow_http: true
+workers:
+  docker_compose: ~
