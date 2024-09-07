@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
@@ -33,7 +32,6 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Patch(
             denormalizationContext: ['groups' => [JsonGroups::UPDATE_USER]],
             processor: UserPasswordHasherProcessor::class),
-        new Delete(),
     ],
     normalizationContext: ['groups' => [JsonGroups::READ_USER]],
     denormalizationContext: ['groups' => [JsonGroups::CREATE_USER, JsonGroups::UPDATE_USER]],
@@ -45,6 +43,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\Column]
     #[Groups([JsonGroups::READ_USER])]
+    #[ApiProperty(example: 'usr_66dc8729a4ec7')]
     private string $id;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -162,11 +161,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function eraseCredentials(): void
     {
-        // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+         $this->plainPassword = null;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }

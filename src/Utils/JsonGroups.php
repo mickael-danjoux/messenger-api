@@ -8,4 +8,10 @@ class JsonGroups
     public const CREATE_USER = "create:User";
     public const UPDATE_USER = "update:User";
 
+    public const READ_MESSAGE = "read:Message";
+    public const CREATE_MESSAGE = "create:Message";
+    public const READ_CONVERSATION = "read:Conversation";
+
+
+
 }
