@@ -22,6 +22,6 @@ api_platform:
         pagination_client_items_per_page: true
     keep_legacy_inflector: false
     use_symfony_listeners: true
-
+    enable_link_security: true
     patch_formats:
         json: [ 'application/merge-patch+json', 'application/json' ]

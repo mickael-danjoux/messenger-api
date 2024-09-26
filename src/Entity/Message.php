@@ -4,12 +4,11 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
-use App\ApiPlatform\Processor\MessageProcessor;
-use App\ApiPlatform\Provider\ConversationDataProvider;
-use App\Dto\Conversation;
+use App\ApiPlatform\Processors\MessageProcessor;
+use App\ApiPlatform\Providers\ConversationProvider;
 use App\Repository\MessageRepository;
 use App\Utils\JsonGroups;
 use Doctrine\DBAL\Types\Types;
@@ -17,29 +16,34 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
-
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
 #[ApiResource(
-    operations:[
-        new Get(),
-        new GetCollection(
-            uriTemplate: "/conversations",
-            paginationEnabled: false,
-            normalizationContext: ['groups' => [JsonGroups::READ_CONVERSATION]],
-            output: Conversation::class,
-            provider: ConversationDataProvider::class
+    operations: [
+        new Post(
+            securityPostDenormalize: "is_granted('IS_OWNER', object.getConversation())",
+            processor: MessageProcessor::class,
         ),
-        new Post(processor: MessageProcessor::class),
+        new GetCollection(
+            uriTemplate: '/conversations/{conversationId}/messages',
+            uriVariables: [
+                'conversationId' => new Link(
+                    toProperty: 'conversation',
+                    fromClass: Conversation::class,
+                    security: 'is_granted("IS_OWNER", conversation)'
+                )
+            ],
+        ),
     ],
     normalizationContext: ['groups' => [JsonGroups::READ_MESSAGE]],
     denormalizationContext: ['groups' => [JsonGroups::CREATE_MESSAGE]],
+    order: ['createdAt' => 'DESC'],
 )]
 class Message
 {
     #[ORM\Id]
     #[ORM\Column]
-    #[Groups([JsonGroups::READ_MESSAGE])]
     #[ApiProperty(example: 'msg_66dc8729a4ec7')]
+    #[Groups([JsonGroups::READ_MESSAGE])]
     private string $id;
 
     #[ORM\Column]
@@ -58,12 +62,13 @@ class Message
     #[ApiProperty(example: '/api/users/usr_67dc7729a4sv4')]
     private ?User $sender = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'messages')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups([JsonGroups::READ_MESSAGE, JsonGroups::CREATE_MESSAGE])]
-    #[ApiProperty(example: '/api/users/usr_66dc8729a4ec7')]
+    #[ApiProperty(example: '/api/conversations/conv_66dc8729a4ec7')]
     #[Assert\NotBlank]
-    private ?User $recipient = null;
+    private ?Conversation $conversation = null;
+
 
     public function __construct()
     {
@@ -107,15 +112,16 @@ class Message
         return $this;
     }
 
-    public function getRecipient(): ?User
+    public function getConversation(): ?Conversation
     {
-        return $this->recipient;
+        return $this->conversation;
     }
 
-    public function setRecipient(?User $recipient): static
+    public function setConversation(?Conversation $conversation): static
     {
-        $this->recipient = $recipient;
+        $this->conversation = $conversation;
 
         return $this;
     }
+
 }

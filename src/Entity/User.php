@@ -8,9 +8,11 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
-use App\ApiPlatform\Processor\UserPasswordHasherProcessor;
+use App\ApiPlatform\Processors\UserPasswordHasherProcessor;
 use App\Repository\UserRepository;
 use App\Utils\JsonGroups;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -83,10 +85,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ApiProperty(example: 'DOE')]
     private ?string $lastName = null;
 
+
+    /**
+     * @var Collection<int, ConversationParticipant>
+     */
+    #[ORM\OneToMany(targetEntity: ConversationParticipant::class, mappedBy: 'user')]
+    private Collection $conversationParticipants;
+
     public function __construct()
     {
         $this->id = uniqid('usr_');
         $this->createdAt = new \DateTimeImmutable();
+        $this->conversationParticipants = new ArrayCollection();
     }
 
 
@@ -201,6 +211,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPlainPassword(?string $plainPassword): self
     {
         $this->plainPassword = $plainPassword;
+        return $this;
+    }
+
+
+    /**
+     * @return Collection<int, ConversationParticipant>
+     */
+    public function getConversationParticipants(): Collection
+    {
+        return $this->conversationParticipants;
+    }
+
+    public function addConversationParticipant(ConversationParticipant $conversationParticipant): static
+    {
+        if (!$this->conversationParticipants->contains($conversationParticipant)) {
+            $this->conversationParticipants->add($conversationParticipant);
+            $conversationParticipant->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeConversationParticipant(ConversationParticipant $conversationParticipant): static
+    {
+        if ($this->conversationParticipants->removeElement($conversationParticipant)) {
+            // set the owning side to null (unless already changed)
+            if ($conversationParticipant->getUser() === $this) {
+                $conversationParticipant->setUser(null);
+            }
+        }
+
         return $this;
     }
 

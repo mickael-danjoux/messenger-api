@@ -22,11 +22,20 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    App\ApiPlatform\Processor\UserPasswordHasherProcessor:
+    App\ApiPlatform\Processors\UserPasswordHasherProcessor:
         bind:
             $processor: '@api_platform.doctrine.orm.state.persist_processor'
-    App\ApiPlatform\Processor\MessageProcessor:
+    App\ApiPlatform\Processors\MessageProcessor:
         bind:
             $processor: '@api_platform.doctrine.orm.state.persist_processor'
+    App\ApiPlatform\Processors\ConversationProcessor:
+        bind:
+            $processor: '@api_platform.doctrine.orm.state.persist_processor'
+    App\ApiPlatform\Extensions\ConversationFilterExtension:
+        arguments:
+            $security: '@security.helper'
+        tags:
+            - { name: 'api_platform.doctrine.orm.query_extension.collection' }
+
 
 

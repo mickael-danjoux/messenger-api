@@ -11,7 +11,6 @@ class JsonGroups
     public const READ_MESSAGE = "read:Message";
     public const CREATE_MESSAGE = "create:Message";
     public const READ_CONVERSATION = "read:Conversation";
-
-
+    public const CREATE_CONVERSATION = "create:Conversation";
 
 }
